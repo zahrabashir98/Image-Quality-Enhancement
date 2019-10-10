@@ -19,26 +19,35 @@ def plotter(img_list, r, w, gray, wr, hr, fig_name = None):
         plt.savefig(fig_name + '.jpg')
     plt.show()
 
-def each_part_strech(image ):
+def each_part_strech(image, c, d):
     transform_function = [] 
     histg = cv2.calcHist([image],[0],None,[256],[0,256]) 
-    # find min max
-    temp1 = []
-    temp2 = []
     print(image.shape)
-    for hist in histg:
-        if hist[0] ==0:
-            temp1.append(300)
-        else:
-            temp1.append(hist[0])
+    # find min max
+    # temp1 = []
+    # temp2 = []
+    # print(image.shape)
+    # for hist in histg:
+    #     if hist[0] ==0:
+    #         temp1.append(300)
+    #     else:
+    #         temp1.append(hist[0])
 
-    for hist in histg:
-        temp2.append(hist[0])
+    # for hist in histg:
+    #     temp2.append(hist[0])
  
-    min_number_frequency = (min(temp1))
-    c = temp1.index(min(temp1))
-    max_number_frequency = (max(temp2))
-    d = temp2.index(max(temp2))
+    # min_number_frequency = (min(temp1))
+    # c = temp1.index(min(temp1))
+    # max_number_frequency = (max(temp2))
+    # d = temp2.index(max(temp2))
+    if c == 1000 and d ==1000:
+        freq_list = []
+        for i in range(image.shape[0]):
+            for j in range(image.shape[1]):
+                freq_list.append(image[i,j])
+        # freq_list.sort()
+        c = min(freq_list)
+        d = max(freq_list)
 
     a = numpy.zeros(shape=(image.shape[0], image.shape[1]))
     for area in range(local_area):
@@ -88,16 +97,16 @@ def seperate_picture(img, local_area):
         croped_images = numpy.array(croped_images)
         return croped_images
 
-def concat_images(image_list):
+def concat_images(pictures_list):
     if local_area == 4:
-        f = numpy.row_stack((image_list[0], image_list[3]))
-        g = numpy.row_stack((image_list[1], image_list[2]))
+        f = numpy.row_stack((pictures_list[0], pictures_list[3]))
+        g = numpy.row_stack((pictures_list[1], pictures_list[2]))
         h = numpy.column_stack((f,g))
         return h
 
     elif local_area == 8:
-        f = numpy.row_stack((image_list[0], image_list[1],image_list[2],image_list[3] ))
-        g = numpy.row_stack((image_list[1], image_list[2], image_list[3], image_list[4]))
+        f = numpy.row_stack((pictures_list[0], pictures_list[1],pictures_list[2],pictures_list[3] ))
+        g = numpy.row_stack((pictures_list[1], pictures_list[2], pictures_list[3], pictures_list[4]))
         h = numpy.column_stack((f,g))
         return h
 
@@ -105,25 +114,20 @@ def concat_images(image_list):
 
 def stretch_hist(image, local_area ):
     # print(image)
-    print(type(image))
+    # print(type(image))
     transform_functions = [[(color_s, color_d) for color_s, color_d in zip(range(256), range(256))] for _ in range(local_area)]
     croped_images = seperate_picture(image, local_area)
-    image_list = []
+    pictures_list = []
     print("baraye LA %s: image ha"%local_area)
 
     for i in range(local_area):
-        new_image, tf = each_part_strech(croped_images[i])
-        image_list.append(new_image)
+        new_image, tf = each_part_strech(croped_images[i], 1000, 1000)
+        pictures_list.append(new_image)
         transform_functions[i] = tf
     
     if local_area != 1:
-        new_image = concat_images(image_list)
-    
-        # print(new_image)
-        # print(croped_images[i])
-        # print("*********************\n\n")
+        new_image = concat_images(pictures_list)
 
-    # print(transform_functions,"\n")
     print("\n")
     return new_image, transform_functions
 
@@ -131,19 +135,79 @@ def stretch_hist(image, local_area ):
 
 
 def clip1_hist(image, local_area = 1):
+    freq_list = []
+    for i in range(200):
+        for j in range(300):
+            freq_list.append(image[i,j])
+    freq_list.sort()
+    clip1_list = freq_list[6:594]
+    c = min(clip1_list)
+    d = max(clip1_list)
     transform_functions = [[(color_s, color_d) for color_s, color_d in zip(range(256), range(256))] for _ in range(local_area)]
-    #Write your code here
-    return image, transform_functions
+    croped_images = seperate_picture(image, local_area)
+    pictures_list = []
+    print("baraye LA %s: image ha"%local_area)
+
+    for i in range(local_area):
+        new_image, tf = each_part_strech(croped_images[i], c, d)
+        pictures_list.append(new_image)
+        transform_functions[i] = tf
+    
+    if local_area != 1:
+        new_image = concat_images(pictures_list)
+    
+    return new_image, transform_functions
+
+
+def CDF_calculator(h):
+	# finds cumulative sum of a numpy array, list
+	return [sum(h[:i+1]) for i in range(len(h))]
+
+def equalize(image):
+
+    histg = cv2.calcHist([image],[0],None,[256],[0,256]) 
+
+    #cumulative distribution function
+    cdf = numpy.array(CDF_calculator(histg))
+
+    #finding transfer function values
+    sk = numpy.uint8(255 * cdf)	
+    s1, s2 = image.shape
+    Y = numpy.zeros_like(image)
+
+	# applying transfered values for each pixels
+    for i in range(0, s1):
+        for j in range(0, s2):
+            Y[i, j] = sk[image[i, j]]
+    print(len(sk))
+    transform_function = []
+    for i in range(256):
+        transform_function.append((i,sk[i]))
+    return Y, transform_function
 
 def equalize_hist(image, local_area = 1):
     transform_functions = [[(color_s, color_d) for color_s, color_d in zip(range(256), range(256))] for _ in range(local_area)]
-    #Write your code here
-    return image, transform_functions
+    croped_images = seperate_picture(image, local_area)
+    pictures_list = []
+    # print("baraye LA %s: image ha"%local_area)
+
+    for i in range(local_area):
+        new_image, tf = equalize(croped_images[i])
+        pictures_list.append(new_image)
+        transform_functions[i] = tf
+    
+    if local_area != 1:
+        new_image = concat_images(pictures_list)
+    
+
+	
+    return new_image, transform_functions
 
 image_list = []
 local_areas = [1, 4, 8]
 image = cv2.imread(os.path.join('images', 'Q4.jpg'), cv2.IMREAD_GRAYSCALE)
 image_list.append([image, 'src'])
+
 for local_area in local_areas:
     stretched, transforms_stretched = stretch_hist(image, local_area)
     clipped, transforms_clipped = clip1_hist(image, local_area)
