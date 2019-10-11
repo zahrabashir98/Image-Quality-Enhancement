@@ -22,7 +22,7 @@ def plotter(img_list, r, w, gray, wr, hr, fig_name = None):
 def each_part_strech(image, c, d):
     transform_function = [] 
     histg = cv2.calcHist([image],[0],None,[256],[0,256]) 
-    print(image.shape)
+
     freq_list = []
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
@@ -65,25 +65,33 @@ def seperate_picture(img, local_area):
     
 
     elif local_area == 4:
-        
-        croped_images.append(img[0:100, 0:150])
-        croped_images.append(img[100:200, 0:150])
-        # tartibo check kon
-        croped_images.append(img[0:100, 150:300])
-
-        croped_images.append(img[100:200, 150:300])
+        for i in range(2):
+            for j in range(2):
+                a, b = int(0 + (j*image.shape[0]/2)), int(image.shape[0]/2 + (j* image.shape[0]/2))
+                x, y = int(0 + (i*image.shape[1]/2)), int(image.shape[1]/2 + (i *image.shape[1]/2))
+                croped_images.append(img[a:b, x:y])
+        # croped_images.append(img[0:100, 0:150])
+        # croped_images.append(img[100:200, 0:150])
+        # croped_images.append(img[0:100, 150:300])
+        # croped_images.append(img[100:200, 150:300])
         croped_images = numpy.array(croped_images)
         return croped_images
 
     elif local_area == 8:
-        croped_images.append(img[0:50, 0:150])
-        croped_images.append(img[50:100, 0:150])
-        croped_images.append(img[100:150, 0:150])
-        croped_images.append(img[150:200, 0:150])
-        croped_images.append(img[0:50, 150:300])
-        croped_images.append(img[50:100, 150:300])
-        croped_images.append(img[100:150, 150:300])
-        croped_images.append(img[150:200, 150:300])
+        for i in range(2):
+            for j in range(4):
+                a, b = int(0 + (j*image.shape[0]/4)), int(image.shape[0]/4 + (j* image.shape[0]/4))
+                x, y = int(0 + (i*image.shape[1]/2)), int(image.shape[1]/2 + (i *image.shape[1]/2))
+                croped_images.append(img[a:b, x:y])
+
+        # croped_images.append(img[0:50, 0:150])
+        # croped_images.append(img[50:100, 0:150])
+        # croped_images.append(img[100:150, 0:150])
+        # croped_images.append(img[150:200, 0:150])
+        # croped_images.append(img[0:50, 150:300])
+        # croped_images.append(img[50:100, 150:300])
+        # croped_images.append(img[100:150, 150:300])
+        # croped_images.append(img[150:200, 150:300])
         croped_images = numpy.array(croped_images)
         return croped_images
 
@@ -103,12 +111,11 @@ def concat_images(pictures_list):
 
 
 def stretch_hist(image, local_area ):
-    # print(image)
-    # print(type(image))
+
     transform_functions = [[(color_s, color_d) for color_s, color_d in zip(range(256), range(256))] for _ in range(local_area)]
     croped_images = seperate_picture(image, local_area)
     pictures_list = []
-    print("baraye LA %s: image ha"%local_area)
+    print("Strech - For Local Area %s:"%local_area)
 
     for i in range(local_area):
         new_image, tf = each_part_strech(croped_images[i], 1000, 1000)
@@ -131,7 +138,6 @@ def clip1_hist(image, local_area = 1):
         for j in range(300):
             freq_list.append(image[i,j])
     freq_list.sort()
-    print(freq_list)
     clip1_list = freq_list[600:59400]
 
     c = min(clip1_list)
@@ -141,7 +147,7 @@ def clip1_hist(image, local_area = 1):
     transform_functions = [[(color_s, color_d) for color_s, color_d in zip(range(256), range(256))] for _ in range(local_area)]
     croped_images = seperate_picture(image, local_area)
     pictures_list = []
-    print("baraye LA %s: image ha"%local_area)
+    print("Clip1 - For Local Area %s:"%local_area)
 
     for i in range(local_area):
         new_image, tf = each_part_strech(croped_images[i], 0, 0)
@@ -150,10 +156,7 @@ def clip1_hist(image, local_area = 1):
     
     if local_area != 1:
         new_image = concat_images(pictures_list)
-    # print(c)
-    # print(d)
-    # print(image[0])
-    # print(new_image[0])
+
     return new_image, transform_functions
 
 
