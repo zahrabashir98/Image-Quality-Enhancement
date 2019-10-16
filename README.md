@@ -21,6 +21,10 @@
 ##### The main code is located in `Main.py`.
 ##### You can see the results and tranfromation fucntions it the separet folders.
 #### `As an example:`This is the input and output of mine:
-![The primary image](/images/Q3.jpg)
+![The primary image](/images/Q4.jpg)
 
 ![After applying the approaches with local area = 1](/results/local_area(1).jpg)
+
+
+###### Comming Soon !
+###### `CLAHE Approach`
